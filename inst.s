@@ -17,6 +17,7 @@ _start:
     #  -24(%rbp): number line           <quad>
     #  -32(%rbp): line offset           <quad>
     #  -40(%rbp): current token         <ptr>
+    #  -48(%rbp): nth token             <quad>
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp
@@ -24,6 +25,7 @@ _start:
     movq    $-1, -32(%rbp)
     leaq    Tokens(%rip), %rax
     movq    %rax, -40(%rbp)
+    movq    $0, -48(%rbp)
     # rdi saves the name of the file to be
     # interpreted: edi = open(rdi, O_RDONLY, 0)
     xorq    %rsi, %rsi
@@ -54,8 +56,14 @@ _start:
     xorq    %r9, %r9
     movq    $9, %rax
     syscall
+    cmpq    $-1, %rax
+    je      fatal_readfile
     movq    %rax, -8(%rbp)
     movq    %rsi, -16(%rbp)
+    # Closing file.
+    movq    %r8, %rdi
+    movq    $3, %rax
+    syscall
     # Lexer begins from here...
     # r15 will be a pointer to the current location
     # in the file.
@@ -71,6 +79,10 @@ _start:
     call    ._check_chr_
     testl   %eax, %eax
     jz      .lx_skip_ch
+    # Cheking Tokens boundaries.
+    movq    -48(%rbp), %rax
+    cmpq    %rax, tokens_max(%rip)
+    je      fatal_toklim
     # Setting context for this token:
     # 1. context as string...
     # 2. number line.........
@@ -81,6 +93,7 @@ _start:
     movq    %rax, 8(%r8)
     movq    -32(%rbp), %rax
     movq    %rax, 16(%r8)
+    incq    -48(%rbp)
     # An optimization can be performed when the lexer find
     # tokens and it's to collect them by chunks since it's
     # pretty usual findn more than one token at the time.
@@ -100,9 +113,15 @@ _start:
     jmp     .lx_advance_one_token
 
 .lx_handle_opening:
+
 .lx_handle_closing:
 
 .lx_advance_one_token:
+    # Getting index of new token.
+    movq    -48(%rbp), %rax
+    movq    token_size(%rip), %rbx
+    mulq    %rbx
+    addq    %rax, -40(%rbp)
     jmp     .lx_continue
 
 .lx_skip_ch:
@@ -122,7 +141,7 @@ _start:
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
-    __fini  -32(%rbp)
+    __fini  $69
 
 #  _______________________________________
 # / checks if whatever stored into edi is \
