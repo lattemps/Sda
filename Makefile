@@ -1,4 +1,4 @@
-objs = inst.o fatal.o
+objs = inst.o fatal.o interpreter.o
 exec = inst
 
 all: $(exec)

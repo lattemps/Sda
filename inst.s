@@ -12,15 +12,18 @@ _start:
     popq    %rdi
     popq    %rdi
     # Setting up the stack for this function
-    #   -8(%rbp): file's content <ptr>
-    #  -16(%rbp): file's length <quad>
-    #  -24(%rbp): number line <quad>
-    #  -32(%rbp): offset line <quad>
+    #   -8(%rbp): file's content        <ptr>
+    #  -16(%rbp): file's length         <quad>
+    #  -24(%rbp): number line           <quad>
+    #  -32(%rbp): line offset           <quad>
+    #  -40(%rbp): current token         <ptr>
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp
     movq    $1, -24(%rbp)
     movq    $-1, -32(%rbp)
+    leaq    Tokens(%rip), %rax
+    movq    %rax, -40(%rbp)
     # rdi saves the name of the file to be
     # interpreted: edi = open(rdi, O_RDONLY, 0)
     xorq    %rsi, %rsi
@@ -68,12 +71,38 @@ _start:
     call    ._check_chr_
     testl   %eax, %eax
     jz      .lx_skip_ch
-
+    # Setting context for this token:
+    # 1. context as string...
+    # 2. number line.........
+    # 3. with an offset of...
+    movq    -40(%rbp), %r8
+    movq    %r15, (%r8)
+    movq    -24(%rbp), %rax
+    movq    %rax, 8(%r8)
+    movq    -32(%rbp), %rax
+    movq    %rax, 16(%r8)
+    # An optimization can be performed when the lexer find
+    # tokens and it's to collect them by chunks since it's
+    # pretty usual findn more than one token at the time.
+    # Therefore the lexer groups them by chunks of a length
+    # determinated by '_times_per_token_', this optimization
+    # cannot be done with '[' and ']' tokens since they behave
+    # in a different way.
+    cmpl    $'[', %edi
+    je      .lx_handle_opening
+    cmpl    $']', %edi
+    je      .lx_handle_closing
+    # Getting and setting chunk size for current 'accumulative' token.
     leaq    -24(%rbp), %r14
     leaq    -32(%rbp), %r13
     call    ._times_per_token_
-    __fini  %rax
+    movq    %rax, 24(%r8)
+    jmp     .lx_advance_one_token
 
+.lx_handle_opening:
+.lx_handle_closing:
+
+.lx_advance_one_token:
     jmp     .lx_continue
 
 .lx_skip_ch:
@@ -126,8 +155,16 @@ _start:
 ._cc_fini:
     ret
 
-# r14: number line
-# r13: offset line
+#  _______________________________________
+# / Gets the number of times a token      \
+# | appears in a row: r14 <ptr> to number |
+# \ line, r13 <ptr> to line offset        /
+#  ---------------------------------------
+#         \   ^__^
+#          \  (oo)\_______
+#             (__)\       )\/\
+#                 ||----w |
+#                 ||     ||
 ._times_per_token_:
     movq    $1, %rcx
     movzbl  (%r15), %ebx
