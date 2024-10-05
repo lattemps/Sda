@@ -12,13 +12,18 @@ _start:
     popq    %rdi
     popq    %rdi
     # Setting up the stack for this function
-    #
+    #   -8(%rbp): file's content <ptr>
+    #  -16(%rbp): file's length <quad>
+    #  -24(%rbp): number line <quad>
+    #  -32(%rbp): offset line <quad>
     pushq   %rbp
     movq    %rsp, %rbp
-    subq    $32, %rsp
+    subq    $64, %rsp
+    movq    $1, -24(%rbp)
+    movq    $-1, -32(%rbp)
     # rdi saves the name of the file to be
-    # interpreted: edi = open(rdi, O_RDWR, 0)
-    movq    $2, %rsi
+    # interpreted: edi = open(rdi, O_RDONLY, 0)
+    xorq    %rsi, %rsi
     xorq    %rdx, %rdx
     movq    $2, %rax
     syscall
@@ -41,10 +46,114 @@ _start:
     movq    %rdi, %r8
     xorq    %rdi, %rdi
     movq    %r15, %rsi
-    movq    $3, %rdx
-    movq    $2, %r10        # here
+    movq    $1, %rdx
+    movq    $2, %r10
     xorq    %r9, %r9
     movq    $9, %rax
     syscall
+    movq    %rax, -8(%rbp)
+    movq    %rsi, -16(%rbp)
+    # Lexer begins from here...
+    # r15 will be a pointer to the current location
+    # in the file.
+    movq    -8(%rbp), %r15
 
-    __fini  $69
+.lexer_eats:
+    # Making sure ain't the EOF
+    movzbl  (%r15), %eax
+    testl   %eax, %eax
+    jz      .fini_tout
+    movl    %eax, %edi
+    incq    -32(%rbp)
+    call    ._check_chr_
+    testl   %eax, %eax
+    jz      .lx_skip_ch
+
+    leaq    -24(%rbp), %r14
+    leaq    -32(%rbp), %r13
+    call    ._times_per_token_
+    __fini  %rax
+
+    jmp     .lx_continue
+
+.lx_skip_ch:
+    # If the char is a newline the lexer parameters
+    # must be updated and then keep eating...
+    cmpl    $'\n', %edi
+    jne     .lx_continue
+    incq    -24(%rbp)
+    movq    $-1, -32(%rbp)
+.lx_continue:
+    incq    %r15
+    jmp     .lexer_eats
+
+.fini_tout:
+    # unmapping memory used for reading the file.
+    movq    -8(%rbp), %rdi
+    movq    -16(%rbp), %rsi
+    movq    $11, %rax
+    syscall
+    __fini  -32(%rbp)
+
+#  _______________________________________
+# / checks if whatever stored into edi is \
+# \ token                                 /
+#  ---------------------------------------
+#         \   ^__^
+#          \  (oo)\_______
+#             (__)\       )\/\
+#                 ||----w |
+#                 ||     ||
+._check_chr_:
+    movl    $1, %eax
+    cmpl    $'.', %edi
+    je      ._cc_fini
+    cmpl    $',', %edi
+    je      ._cc_fini
+    cmpl    $'[', %edi
+    je      ._cc_fini
+    cmpl    $']', %edi
+    je      ._cc_fini
+    cmpl    $'<', %edi
+    je      ._cc_fini
+    cmpl    $'>', %edi
+    je      ._cc_fini
+    cmpl    $'+', %edi
+    je      ._cc_fini
+    cmpl    $'-', %edi
+    je      ._cc_fini
+    movl    $0, %eax
+._cc_fini:
+    ret
+
+# r14: number line
+# r13: offset line
+._times_per_token_:
+    movq    $1, %rcx
+    movzbl  (%r15), %ebx
+    # getting the next character
+    incq    %r15
+    incq    (%r13)
+._tpt_search:
+    movzbl  (%r15), %edi
+    cmpl    $0, %edi
+    je      ._tpt_fini
+    call    ._check_chr_
+    testl   %eax, %eax
+    jz      ._tpt_non_token
+    cmpl    %ebx, %edi
+    jne     ._tpt_fini
+    incq    %rcx
+    jmp     ._tpt_continue
+._tpt_non_token:
+    cmpl    $'\n', %edi
+    jne     ._tpt_continue
+    movq    $-1, (%r13)
+    incq    (%r14)
+._tpt_continue:
+    incq    %r15
+    incq    (%r13)
+    jmp     ._tpt_search
+._tpt_fini:
+    movq    %rcx, %rax
+    ret
