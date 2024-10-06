@@ -79,7 +79,7 @@ _start:
     call    ._check_chr_
     testl   %eax, %eax
     jz      .lx_skip_ch
-    # Cheking Tokens boundaries.
+    # Cheking `Tokens` array boundaries.
     movq    -48(%rbp), %rax
     cmpq    %rax, tokens_max(%rip)
     je      fatal_toklim
@@ -141,7 +141,7 @@ _start:
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
-    __fini  $69
+    __fini  -48(%rbp)
 
 #  _______________________________________
 # / checks if whatever stored into edi is \
@@ -211,5 +211,6 @@ _start:
     incq    (%r13)
     jmp     ._tpt_search
 ._tpt_fini:
+    decq    %r15
     movq    %rcx, %rax
     ret
