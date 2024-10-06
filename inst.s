@@ -18,6 +18,7 @@ _start:
     #  -32(%rbp): line offset           <quad>
     #  -40(%rbp): current token         <ptr>
     #  -48(%rbp): nth token             <quad>
+    #  -56(%rbp): [ ] counter           <quad>
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $64, %rsp
@@ -26,6 +27,7 @@ _start:
     leaq    Tokens(%rip), %rax
     movq    %rax, -40(%rbp)
     movq    $0, -48(%rbp)
+    movq    $0, -56(%rbp)
     # rdi saves the name of the file to be
     # interpreted: edi = open(rdi, O_RDONLY, 0)
     xorq    %rsi, %rsi
@@ -93,7 +95,6 @@ _start:
     movq    %rax, 8(%r8)
     movq    -32(%rbp), %rax
     movq    %rax, 16(%r8)
-    incq    -48(%rbp)
     # An optimization can be performed when the lexer find
     # tokens and it's to collect them by chunks since it's
     # pretty usual findn more than one token at the time.
@@ -111,19 +112,34 @@ _start:
     call    ._times_per_token_
     movq    %rax, 24(%r8)
     jmp     .lx_advance_one_token
-
-.lx_handle_opening:
+.lx_handle_opening: 
+    # Making sure there still is enough capacity
+    # to keep collecting `[` tokens...
+    movq    -56(%rbp), %rbx
+    cmpq    %rbx, loops_max(%rip)
+    je      fatal_pairs
+    # Setting the mark for this token.
+    # The mark is its position among all
+    # the other tokens aka an index.
+    movq    -48(%rbp), %rcx
+    movq    %rcx, 24(%r8)
+    # Loops is an stack of indexes of `[` tokens.
+    leaq    Loops(%rip), %rax
+    movq    %rcx, (%rax, %rbx, 8)
+    incq    -56(%rbp)
+    jmp     .lx_advance_one_token
 
 .lx_handle_closing:
+    decq    -56(%rbp)
 
 .lx_advance_one_token:
+    incq    -48(%rbp)
     # Getting index of new token.
     movq    -48(%rbp), %rax
     movq    token_size(%rip), %rbx
     mulq    %rbx
     addq    %rax, -40(%rbp)
     jmp     .lx_continue
-
 .lx_skip_ch:
     # If the char is a newline the lexer parameters
     # must be updated and then keep eating...

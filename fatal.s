@@ -11,6 +11,9 @@
     .toklim_msg: .string "[inst:error]: token limit reached\n"
     .toklim_len: .quad   34
 
+    .pairs_msg: .string "[inst:error]: unmatched pairs\n"
+    .pairs_len: .quad   30
+
 .section    .text
 
 .include    "macros.inc"
@@ -33,4 +36,10 @@ fatal_readfile:
 .globl  fatal_toklim
 fatal_toklim:
     __eputs .toklim_msg(%rip), .toklim_len(%rip)
+    __fini  $3
+
+.globl  fatal_pairs
+fatal_pairs:
+    # ToDo implement printf
+    __eputs .pairs_msg(%rip), .pairs_len(%rip)
     __fini  $3
