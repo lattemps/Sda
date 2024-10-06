@@ -137,14 +137,18 @@ _start:
     movq    -56(%rbp), %rbx
     cmpq    $0, %rbx
     je      fatal_pairs
-    # rbx = Loops[rbx - 1] (rbx is a ptr to the last `[` pushed)
+    # r9 = Loops[rbx - 1] (r9 is a ptr to the last `[` pushed)
     decq    %rbx
     leaq    Loops(%rip), %rax
-    movq    (%rax, %rbx, 8), %rbx
-
-
+    movq    (%rax, %rbx, 8), %r9
+    # Setting position where the pair of ']' can be found.
+    movq    24(%r9), %rax
+    movq    %rax, 24(%r8)
+    # Setting position where the pair of '[' can be found.
+    movq    -48(%rbp), %rax
+    movq    %rax, 24(%r9)
+    # One address is gonna be poped
     decq    -56(%rbp)
-
 .lx_advance_one_token:
     incq    -48(%rbp)
     # Getting index of new token.
@@ -170,7 +174,7 @@ _start:
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
-    __fini  -48(%rbp)
+    __fini  $69
 
 #  _______________________________________
 # / checks if whatever stored into edi is \
