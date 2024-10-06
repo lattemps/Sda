@@ -112,24 +112,37 @@ _start:
     call    ._times_per_token_
     movq    %rax, 24(%r8)
     jmp     .lx_advance_one_token
+
+
 .lx_handle_opening: 
     # Making sure there still is enough capacity
     # to keep collecting `[` tokens...
     movq    -56(%rbp), %rbx
     cmpq    %rbx, loops_max(%rip)
-    je      fatal_pairs
+    je      fatal_pairs                                                                                 # ToDo: test
     # Setting the mark for this token.
     # The mark is its position among all
     # the other tokens aka an index.
     movq    -48(%rbp), %rcx
     movq    %rcx, 24(%r8)
-    # Loops is an stack of indexes of `[` tokens.
+    # `Loops` is a stack of '[' token addresses.
+    # Storing this `[` token.
     leaq    Loops(%rip), %rax
-    movq    %rcx, (%rax, %rbx, 8)
+    movq    %r8, (%rax, %rbx, 8)
     incq    -56(%rbp)
     jmp     .lx_advance_one_token
-
 .lx_handle_closing:
+    # Making sure there is a `[` token to pair
+    # `]` token with.
+    movq    -56(%rbp), %rbx
+    cmpq    $0, %rbx
+    je      fatal_pairs
+    # rbx = Loops[rbx - 1] (rbx is a ptr to the last `[` pushed)
+    decq    %rbx
+    leaq    Loops(%rip), %rax
+    movq    (%rax, %rbx, 8), %rbx
+
+
     decq    -56(%rbp)
 
 .lx_advance_one_token:
