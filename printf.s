@@ -12,7 +12,7 @@
     .nbufsz: .quad  32
 
     .aaaa: .string "hola"
-    .test: .string "%c %d %s\n"
+    .test: .string "%% %c %d %s\n"
 
 .section    .data
     .buffer:    .zero   1024
@@ -57,21 +57,21 @@ _printf_:
     movb    %al, (%r9)
     jmp     ._pfcontinue
 ._pfformat:
+    incq    %r8
+    movzbl  (%r8), %eax
+    cmpl    $'%', %eax
+    je      ._pf_fmt_pct
     # r10 will hold this argument
     movq    -24(%rbp), %rbx
     leaq    16(%rbp), %r10
     movq    (%r10, %rbx, 8), %r10
     incq    -24(%rbp)
-    incq    %r8
-    movzbl  (%r8), %eax
     cmpl    $'d', %eax
     je      ._pf_fmt_num
     cmpl    $'s', %eax
     je      ._pf_fmt_str
     cmpl    $'c', %eax
     je      ._pf_fmt_chr
-    cmpl    $'%', %eax
-    je      ._pf_fmt_pct
     jmp     .fatal_expecting_fmt
 
 #  ____________________
@@ -176,7 +176,21 @@ _printf_:
     incq    -16(%rbp)
     jmp     ._pfcontinue
 
+#  ________________
+# < format for %'s >
+#  ----------------
+#   \
+#    \
+#        __
+#       UooU\.'@@@@@@`.
+#       \__/(@@@@@@@@@@)
+#            (@@@@@@@@)
+#            `YY~~~~YY'
+#             ||    ||
 ._pf_fmt_pct:
+    movb    $'%', (%r9)
+    incq    -16(%rbp)
+    jmp     ._pfcontinue
 
 ._pf_fmt_end:
     decq    %r9
@@ -193,7 +207,6 @@ _printf_:
     movq    -16(%rbp), %rax
     leave
     ret
-
 #  _____________
 # < Errors here >
 #  -------------
