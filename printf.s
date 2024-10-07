@@ -11,7 +11,8 @@
     .buffsz: .quad 1024
     .nbufsz: .quad  32
 
-    .test: .string "%d %d %d\n"
+    .aaaa: .string "hola"
+    .test: .string "%d %s\n"
 
 .section    .data
     .buffer:    .zero   1024
@@ -116,19 +117,31 @@ _printf_:
 ._pf_fmt_num_write_loop:
     movzbl  (%r11), %eax
     testl   %eax, %eax
-    jz      ._pf_fmt_num_write_loop_end
+    jz      ._pf_fmt_end
     movb    %al, (%r9)
     movb    $0, (%r11)
     incq    %r9
     incq    %r11
     jmp     ._pf_fmt_num_write_loop
-._pf_fmt_num_write_loop_end:
-    decq    %r9
-    jmp     ._pfcontinue
 
 ._pf_fmt_str:
+    movzbl  (%r10), %ebx
+    testl   %ebx, %ebx
+    jz      ._pf_fmt_end
+    movq    -16(%rbp), %rax
+    cmpq    %rax, .buffsz(%rip)
+    je      .fatal_buff_overflow
+    movb    %bl, (%r9)
+    incq    -16(%rbp)
+    incq    %r10
+    incq    %r9
+    jmp     ._pf_fmt_str
+
 ._pf_fmt_chr:
 ._pf_fmt_pct:
+
+._pf_fmt_end:
+    decq    %r9
 
 ._pfcontinue:
     incq    %r8
@@ -171,9 +184,10 @@ _printf_:
 #       (__)__ _
 .globl  _start
 _start:
-    pushq   $12
-    pushq   $-13
-    pushq   $0
+    leaq    .aaaa(%rip), %rax
+    pushq   %rax
+    pushq   $45
+
     movq    $1, %rdi
     leaq    .test(%rip), %rsi
     call    _printf_
