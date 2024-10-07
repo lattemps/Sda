@@ -9,7 +9,9 @@
     .expectingfmt_len:   .quad   32
 
     .buffsz: .quad 1024
-    .test: .string "test %d\n"
+    .nbufsz: .quad  32
+
+    .test: .string "%d %d %d\n"
 
 .section    .data
     .buffer:    .zero   1024
@@ -58,6 +60,7 @@ _printf_:
     movq    -24(%rbp), %rbx
     leaq    16(%rbp), %r10
     movq    (%r10, %rbx, 8), %r10
+    incq    -24(%rbp)
     incq    %r8
     movzbl  (%r8), %eax
     cmpl    $'d', %eax
@@ -76,8 +79,52 @@ _printf_:
     incq    -16(%rbp)
     jmp     ._pfcontinue
 ._pf_fmt_num_nz:
-
-
+    leaq    .numbuf(%rip), %r11
+    addq    .nbufsz(%rip), %r11
+    decq    %r11
+    cmpq    $0, %r10
+    jg      ._pf_fmt_num_pos
+    movb    $'-', (%r9)
+    incq    %r9
+    incq    -16(%rbp)
+    negq    %r10
+._pf_fmt_num_pos:
+    testq   %r10, %r10
+    jz      ._pf_fmt_num_write
+    # Checking there is not number overflow.
+    cmpq    %r11, .numbuf(%rip)
+    je      .fatal_buff_overflow                                                                                # ToDo: Test
+    # Checking there is not message overflow.
+    movq    -16(%rbp), %rax
+    cmpq    %rax, .buffsz(%rip)
+    je      .fatal_buff_overflow
+    # Getting the last digit of the number and
+    # the number / 10 goes to r10 as the new number.
+    xorq    %rdx, %rdx
+    movq    %r10, %rax
+    movq    $10, %rcx
+    divq    %rcx
+    movq    %rax, %r10
+    # Writing this digit into r11
+    addq    $'0', %rdx
+    movb    %dl, (%r11)
+    decq    %r11
+    incq    -16(%rbp)
+    jmp     ._pf_fmt_num_pos
+._pf_fmt_num_write:
+    incq    %r11
+._pf_fmt_num_write_loop:
+    movzbl  (%r11), %eax
+    testl   %eax, %eax
+    jz      ._pf_fmt_num_write_loop_end
+    movb    %al, (%r9)
+    movb    $0, (%r11)
+    incq    %r9
+    incq    %r11
+    jmp     ._pf_fmt_num_write_loop
+._pf_fmt_num_write_loop_end:
+    decq    %r9
+    jmp     ._pfcontinue
 
 ._pf_fmt_str:
 ._pf_fmt_chr:
@@ -88,11 +135,13 @@ _printf_:
     incq    %r9
     jmp     ._pfloop
 ._pffini:
+
     movq    -16(%rbp), %rdx
     leaq    .buffer(%rip), %rsi
     movq    -8(%rbp), %rdi
     movq    $1, %rax
     syscall
+    movq    -16(%rbp), %rax
     leave
     ret
 
@@ -113,7 +162,6 @@ _printf_:
     __eputs .expectingfmt_msg(%rip), .expectingfmt_len(%rip)
     __fini  $3
 
-
 #  _______________
 # < Tests here... >
 #  ---------------
@@ -123,11 +171,13 @@ _printf_:
 #       (__)__ _
 .globl  _start
 _start:
+    pushq   $12
+    pushq   $-13
     pushq   $0
     movq    $1, %rdi
     leaq    .test(%rip), %rsi
     call    _printf_
 
+    movq    %rax, %rdi
     movq    $60, %rax
-    movq    $0, %rdi
     syscall
