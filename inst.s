@@ -70,6 +70,7 @@ _start:
     # r15 will be a pointer to the current location
     # in the file.
     movq    -8(%rbp), %r15
+    movq    -40(%rbp), %r8
 
 .lexer_eats:
     # Making sure ain't the EOF
@@ -112,8 +113,6 @@ _start:
     call    ._times_per_token_
     movq    %rax, 24(%r8)
     jmp     .lx_advance_one_token
-
-
 .lx_handle_opening: 
     # Making sure there still is enough capacity
     # to keep collecting `[` tokens...
@@ -245,5 +244,6 @@ _start:
     jmp     ._tpt_search
 ._tpt_fini:
     decq    %r15
+    decq    (%r13)
     movq    %rcx, %rax
     ret

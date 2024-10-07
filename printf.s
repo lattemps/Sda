@@ -11,7 +11,7 @@
     .buffsz: .quad 1024
     .nbufsz: .quad  32
 
-.section    .data
+.section    .bss
     .buffer:    .zero   1024
     .numbuf:    .zero   32
 
