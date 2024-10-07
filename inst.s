@@ -118,7 +118,7 @@ _start:
     # to keep collecting `[` tokens...
     movq    -56(%rbp), %rbx
     cmpq    %rbx, loops_max(%rip)
-    je      fatal_pairs                                                                                 # ToDo: test
+    je      fatal_pairs
     # Setting the mark for this token.
     # The mark is its position among all
     # the other tokens aka an index.
