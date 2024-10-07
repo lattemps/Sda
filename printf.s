@@ -11,9 +11,6 @@
     .buffsz: .quad 1024
     .nbufsz: .quad  32
 
-    .aaaa: .string "hola"
-    .test: .string "%% %c %d %s\n"
-
 .section    .data
     .buffer:    .zero   1024
     .numbuf:    .zero   32
@@ -223,25 +220,3 @@ _printf_:
 .fatal_expecting_fmt:
     __eputs .expectingfmt_msg(%rip), .expectingfmt_len(%rip)
     __fini  $3
-
-#  _______________
-# < Tests here... >
-#  ---------------
-#  \
-#   \
-#    \ >()_
-#       (__)__ _
-.globl  _start
-_start:
-    leaq    .aaaa(%rip), %rax
-    pushq   %rax
-    pushq   $45
-    pushq   $'9'
-
-    movq    $1, %rdi
-    leaq    .test(%rip), %rsi
-    call    _printf_
-
-    movq    %rax, %rdi
-    movq    $60, %rax
-    syscall
