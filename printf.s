@@ -12,7 +12,7 @@
     .nbufsz: .quad  32
 
     .aaaa: .string "hola"
-    .test: .string "%d %s\n"
+    .test: .string "%c %d %s\n"
 
 .section    .data
     .buffer:    .zero   1024
@@ -73,6 +73,18 @@ _printf_:
     cmpl    $'%', %eax
     je      ._pf_fmt_pct
     jmp     .fatal_expecting_fmt
+
+#  ____________________
+# < format for numbers >
+#  --------------------
+#   \
+#    \
+#        __
+#       UooU\.'@@@@@@`.
+#       \__/(@@@@@@@@@@)
+#            (@@@@@@@@)
+#            `YY~~~~YY'
+#             ||    ||
 ._pf_fmt_num:
     cmpq    $0, %r10
     jne      ._pf_fmt_num_nz
@@ -124,6 +136,17 @@ _printf_:
     incq    %r11
     jmp     ._pf_fmt_num_write_loop
 
+#  ____________________
+# < format for strings >
+#  --------------------
+#   \
+#    \
+#        __
+#       UooU\.'@@@@@@`.
+#       \__/(@@@@@@@@@@)
+#            (@@@@@@@@)
+#            `YY~~~~YY'
+#             ||    ||
 ._pf_fmt_str:
     movzbl  (%r10), %ebx
     testl   %ebx, %ebx
@@ -137,18 +160,31 @@ _printf_:
     incq    %r9
     jmp     ._pf_fmt_str
 
+#  ____________________
+# < format for charcts >
+#  --------------------
+#   \
+#    \
+#        __
+#       UooU\.'@@@@@@`.
+#       \__/(@@@@@@@@@@)
+#            (@@@@@@@@)
+#            `YY~~~~YY'
+#             ||    ||
 ._pf_fmt_chr:
+    movb    %r10b, (%r9)
+    incq    -16(%rbp)
+    jmp     ._pfcontinue
+
 ._pf_fmt_pct:
 
 ._pf_fmt_end:
     decq    %r9
-
 ._pfcontinue:
     incq    %r8
     incq    %r9
     jmp     ._pfloop
 ._pffini:
-
     movq    -16(%rbp), %rdx
     leaq    .buffer(%rip), %rsi
     movq    -8(%rbp), %rdi
@@ -187,6 +223,7 @@ _start:
     leaq    .aaaa(%rip), %rax
     pushq   %rax
     pushq   $45
+    pushq   $'9'
 
     movq    $1, %rdi
     leaq    .test(%rip), %rsi
