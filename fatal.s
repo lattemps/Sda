@@ -11,7 +11,7 @@
     .toklim_msg: .string "[inst:error]: token limit reached\n"
     .toklim_len: .quad   34
 
-    .pairs_msg: .string "[inst:error]: unmatched pairs on %d line with an offset of %d\n"
+    .pairs_msg: .string "[inst:error]: (unmatched/maximum) pair on %d line with an offset of %d\n"
 
 .section    .text
 
@@ -37,11 +37,38 @@ fatal_toklim:
     __eputs .toklim_msg(%rip), .toklim_len(%rip)
     __fini  $3
 
-.globl  fatal_pairs
-fatal_pairs:
+.globl  fatal_pair
+fatal_pair:
     pushq   16(%r8)
     pushq   8(%r8)
     movq    $2, %rdi
     leaq    .pairs_msg(%rip), %rsi
     call    _printf_
     __fini  $4
+
+.globl _fatal_pairs_
+_fatal_pairs_:
+    pushq   %rbp
+    movq    %rsp, %rbp
+    subq    $32, %rsp
+    movq    $0, -8(%rbp)
+    movq    %rdi, -16(%rbp)
+    leaq    Loops(%rip), %r15
+    movq    (%r15), %r14
+._ftp_loop:
+    movq    -8(%rbp), %rax
+    cmpq    %rax, -16(%rbp)
+    je      ._ftp_fini
+    pushq   16(%r14)
+    pushq   8(%r14)
+    movq    $2, %rdi
+    leaq    .pairs_msg(%rip), %rsi
+    call    _printf_
+    popq    %rax
+    popq    %rax
+    incq    -8(%rbp)
+    addq    $8, %r15
+    movq    (%r15), %r14
+    jmp     ._ftp_loop
+._ftp_fini:
+    __fini  $5

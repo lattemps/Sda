@@ -8,6 +8,8 @@
     .expectingfmt_msg:  .string "[printf:fatal]: format expected\n"
     .expectingfmt_len:   .quad   32
 
+    .fmt: .string "hola %d hola %d\n"
+
     .buffsz: .quad 1024
     .nbufsz: .quad  32
 
@@ -220,3 +222,37 @@ _printf_:
 .fatal_expecting_fmt:
     __eputs .expectingfmt_msg(%rip), .expectingfmt_len(%rip)
     __fini  $3
+
+#.globl  _start
+#_start:
+#    pushq   %rbp
+#    movq    %rsp, %rbp
+#    subq    $64, %rsp
+#
+#    pushq   $2
+#    pushq   $1
+#    movq    $1, %rdi
+#    leaq    .fmt(%rip), %rsi
+#    call    _printf_
+#
+#    pushq   $2
+#    pushq   $1
+#    movq    $1, %rdi
+#    leaq    .fmt(%rip), %rsi
+#    call    _printf_
+#
+#    pushq   $2
+#    pushq   $1
+#    movq    $1, %rdi
+#    leaq    .fmt(%rip), %rsi
+#    call    _printf_
+#
+#    pushq   $2
+#    pushq   $1
+#    movq    $1, %rdi
+#    leaq    .fmt(%rip), %rsi
+#    call    _printf_
+#
+#    __fini  $0
+#    leave
+#    ret

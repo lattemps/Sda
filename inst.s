@@ -76,7 +76,7 @@ _start:
     # Making sure ain't the EOF
     movzbl  (%r15), %eax
     testl   %eax, %eax
-    jz      .fini_tout
+    jz      .lexer_ends
     movl    %eax, %edi
     incq    -32(%rbp)
     call    ._check_chr_
@@ -118,7 +118,7 @@ _start:
     # to keep collecting `[` tokens...
     movq    -56(%rbp), %rbx
     cmpq    %rbx, loops_max(%rip)
-    je      fatal_pairs
+    je      fatal_pair
     # Setting the mark for this token.
     # The mark is its position among all
     # the other tokens aka an index.
@@ -135,7 +135,7 @@ _start:
     # `]` token with.
     movq    -56(%rbp), %rbx
     cmpq    $0, %rbx
-    je      fatal_pairs
+    je      fatal_pair
     # r9 = Loops[rbx - 1] (r9 is a ptr to the last `[` pushed)
     decq    %rbx
     leaq    Loops(%rip), %rax
@@ -166,13 +166,19 @@ _start:
 .lx_continue:
     incq    %r15
     jmp     .lexer_eats
-
-.fini_tout:
+.lexer_ends:
     # unmapping memory used for reading the file.
     movq    -8(%rbp), %rdi
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
+    movq    -56(%rbp), %rax
+    testq   %rax, %rax
+    jz      .get_ready_for_interp
+    movq    -56(%rbp), %rdi
+    call    _fatal_pairs_
+
+.get_ready_for_interp:
     __fini  $69
 
 #  _______________________________________
