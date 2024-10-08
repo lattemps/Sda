@@ -1,0 +1,14 @@
+
+    Sda - brainfuck interpreter
+
+    Brainfuck interpreter implemented in x86 for the seek of learning
+    and fun, i'd say it is the fastest brainfuck interpreter out there
+    but i have no idea since i did not compare it with others and i probably won't.
+
+    All information for this implementation and the programs to test the interpreter
+    was taken from https://brainfuck.org/ so thank you Daniel for the information and
+    the crazy programs.
+
+    Juan Diego PM
+    Oct 08 2024
+
