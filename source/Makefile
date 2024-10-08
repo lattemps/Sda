@@ -1,5 +1,5 @@
-objs = sda.o err.o int.o printf.o
-exec = Sda
+objs = inst.o err.o int.o printf.o
+exec = inst
 
 inst: $(objs)
 	ld	-o $(exec) $(objs)
