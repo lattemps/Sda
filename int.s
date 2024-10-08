@@ -32,10 +32,10 @@ _int_:
     movl    -8(%rbp), %eax
     cmpl    -16(%rbp), %eax
     je      ._int_fini
-    movq    %r8, %rax
-    movq    (%rax), %rax
+    xorq    %r10, %r10
+    movq    24(%r8), %r10
+    movq    (%r8), %rax
     movzbl  (%rax), %eax
-
     cmpl    $'+', %eax
     je      ._int_inc
     cmpl    $'-', %eax
@@ -48,38 +48,70 @@ _int_:
     je      ._int_inp
     cmpl    $'.', %eax
     je      ._int_out
+    cmpl    $'[', %eax
+    je      ._int_bgn_loop
+    cmpl    $']', %eax
+    je      ._int_end_loop
 
     jmp     ._int_continue
 
-
 ._int_inc:
-    movq    24(%r8), %r10
     addb    %r10b, (%r9)
     jmp     ._int_continue
 ._int_dec:
-    movq    24(%r8), %r10
-    decb    %r10b, (%r9)
+    subb    %r10b, (%r9)
     jmp     ._int_continue
 ._int_nxt:
-    incq    %r9
+    addq    %r10, %r9
     jmp     ._int_continue
 ._int_prv:
-    decq    %r9
+    subq    %r10, %r9
     jmp     ._int_continue
 ._int_inp:
+    testq   %r10, %r10
+    jz      ._int_continue
     movq    %r9, %rsi
     movq    $0, %rdi
     movq    $1, %rdx
     movq    $0, %rax
     syscall
-    jmp     ._int_continue
+    decq    %r10
+    jmp     ._int_inp
 ._int_out:
+    testq   %r10, %r10
+    jz      ._int_continue
     movq    $1, %rax
     movq    $1, %rdx
     movq    $1, %rdi
     movq    %r9, %rsi
     syscall
+    decq    %r10
+    jmp     ._int_out
+._int_bgn_loop:
+    movzbl  (%r9), %eax
+    testl   %eax, %eax
+    jnz     ._int_continue
+    xorq    %rax, %rax
+    movq    24(%r8), %rax
+    movq    %rax, -8(%rbp)
+    movq    token_size(%rip), %rbx
+    mulq    %rbx
+    leaq    Tokens(%rip), %rbx
+    addq    %rax, %rbx
+    movq    %rbx, %r8
     jmp     ._int_continue
+._int_end_loop:
+    movzbl  (%r9), %eax
+    testl   %eax, %eax
+    jz      ._int_continue
+    movq    24(%r8), %rax
+    movq    %rax, -8(%rbp)
+    movq    token_size(%rip), %rbx
+    mulq    %rbx
+    leaq    Tokens(%rip), %rbx
+    addq    %rax, %rbx
+    movq    %rbx, %r8
+    jmp     ._int_eat
 ._int_continue:
     movq    token_size(%rip), %rax
     addq    %rax, %r8
