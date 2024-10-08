@@ -11,6 +11,9 @@
     .toklim_msg: .string "[inst:error]: token limit reached\n"
     .toklim_len: .quad   34
 
+    .nontoken_msg: .string "[inst:error]: how's this possible, pls tell me juandiegopatinomunoz958@gmail.com\n"
+    .nontoken_len: .quad   81
+
     .pairs_msg: .string "[inst:error]: (unmatched/maximum) pair on %d line with an offset of %d\n"
 
 .section    .text
@@ -37,6 +40,21 @@ fatal_toklim:
     __eputs .toklim_msg(%rip), .toklim_len(%rip)
     __fini  $3
 
+.globl fatal_ghostoken
+fatal_ghostoken:
+    __eputs .nontoken_msg(%rip), .nontoken_len(%rip)
+    __fini  $4
+
+#  _________________________________________
+# / call this when Loops is about to        \
+# | overflow or when ] is found without any |
+# \ previous [                              /
+#  -----------------------------------------
+#         \   ^__^
+#          \  (oo)\_______
+#             (__)\       )\/\
+#                 ||----w |
+#                 ||     ||
 .globl  fatal_pair
 fatal_pair:
     pushq   16(%r8)
@@ -44,8 +62,18 @@ fatal_pair:
     movq    $2, %rdi
     leaq    .pairs_msg(%rip), %rsi
     call    _printf_
-    __fini  $4
+    __fini  $5
 
+#  ________________________________________
+# / warns about unmatched pairs, this is   \
+# | called at the end of the lexer process |
+# \ if there is any unmatched bracket(s)   /
+#  ----------------------------------------
+#         \   ^__^
+#          \  (oo)\_______
+#             (__)\       )\/\
+#                 ||----w |
+#                 ||     ||
 .globl _fatal_pairs_
 _fatal_pairs_:
     pushq   %rbp

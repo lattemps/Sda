@@ -22,8 +22,18 @@
 
 .globl  _printf_
 
-# rdi: stream
-# rsi: fmt string
+#  ________________________________________
+# / implementation of printf function, rdi \
+# | gets the stream to write and rsi the   |
+# | formated string. Values must be pushed |
+# | into the stack in the inverse order    |
+# \ they were defined into the fmt-str     /
+#  ----------------------------------------
+#         \   ^__^
+#          \  (oo)\_______
+#             (__)\       )\/\
+#                 ||----w |
+#                 ||     ||
 _printf_:
     cmpq    $0, %rsi
     je      .fatal_null_str

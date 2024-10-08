@@ -1,15 +1,15 @@
 .section    .rodata
-    token_size:    .quad   32                  # size of a token...........................
-    tokens_max:    .quad   1024                # maximum number of tokens..................
-    loops_max:     .quad   64                  # maximum number of nested loops in a row...
+    token_size:    .quad   32
+    tokens_max:    .quad   1024
+    loops_max:     .quad   64
 
     .globl  token_size
     .globl  tokens_max
     .globl  loops_max
 
 .section    .bss 
-    Tokens: .zero   1024 * 32  # Capcity of 1024 tokens of size 32 B.......
-    Loops:  .zero   64 * 8     # Array of ptrs <ptr is size 8 B>...........
+    Tokens: .zero   1024 * 32
+    Loops:  .zero   64 * 8
     .Mem:   .zero   30000
 
     .globl  Tokens
@@ -17,15 +17,17 @@
 
 .section    .text
 
-.include    "macros.inc"                # Note: remove this
-
 .globl  _int_
 _int_:
     pushq   %rbp
     movq    %rsp, %rbp
     subq    $16, %rsp
+    # -8(%rbp): current token's index..................
+    # -16(%rbp): number of tokens saved by the lexer...
     movq    $0, -8(%rbp)
     movq    %rdi, -16(%rbp)
+    # r8: Current token................................
+    # r9: Current position in bf-memory (.Mem).........
     leaq    Tokens(%rip), %r8
     leaq    .Mem(%rip), %r9
 ._int_eat:
@@ -33,6 +35,9 @@ _int_:
     cmpl    -16(%rbp), %eax
     je      ._int_fini
     xorq    %r10, %r10
+    # r10: Saves the number of times a token appears in a row
+    # unless the token is [ or ], in such case it saves the
+    # position where its pair can be found.
     movq    24(%r8), %r10
     movq    (%r8), %rax
     movzbl  (%rax), %eax
@@ -52,9 +57,8 @@ _int_:
     je      ._int_bgn_loop
     cmpl    $']', %eax
     je      ._int_end_loop
-
-    jmp     ._int_continue
-
+    # The program should not get here, no matter what
+    jmp     fatal_ghostoken
 ._int_inc:
     addb    %r10b, (%r9)
     jmp     ._int_continue
@@ -118,8 +122,5 @@ _int_:
     incl    -8(%rbp)
     jmp     ._int_eat
 ._int_fini:
-    movzbl  (%r9), %eax
-    cltq
-    __fini  %rax
     leave
     ret

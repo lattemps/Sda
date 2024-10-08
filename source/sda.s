@@ -174,7 +174,7 @@ _start:
     jz      .get_ready_for_interp
     call    _fatal_pairs_
     # unmapping memory used for reading the file.
-    movq    $5, %r15
+    movq    $6, %r15
     jmp     .unmmap_and_finish
 .get_ready_for_interp:
     movq    -48(%rbp), %rdi
