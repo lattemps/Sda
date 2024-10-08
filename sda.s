@@ -1,6 +1,3 @@
-.section .rodata
-    .ss: .string "%d\n"
-
 .section    .text
 .globl  _start
 
@@ -177,10 +174,9 @@ _start:
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
-    movq    -56(%rbp), %rax
-    testq   %rax, %rax
+    movq    -56(%rbp), %rdi
+    testq   %rdi, %rdi
     jz      .get_ready_for_interp
-    movq    -48(%rbp), %rdi
     call    _fatal_pairs_
 
 .get_ready_for_interp:
