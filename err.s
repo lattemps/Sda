@@ -68,6 +68,5 @@ _fatal_pairs_:
     addq    $32, %r15
     jmp     ._ftp_loop
 ._ftp_fini:
-    __fini  $5
     leave
     ret

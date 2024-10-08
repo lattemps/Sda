@@ -91,7 +91,7 @@ _start:
     # 2. number line.........
     # 3. with an offset of...
     movq    -40(%rbp), %r8
-    movq    %r15, (%r8)
+    movq    %r15, 0(%r8)
     movq    -24(%rbp), %rax
     movq    %rax, 8(%r8)
     movq    -32(%rbp), %rax
@@ -169,18 +169,24 @@ _start:
     incq    %r15
     jmp     .lexer_eats
 .lexer_ends:
+    movq    -56(%rbp), %rdi
+    testq   %rdi, %rdi
+    jz      .get_ready_for_interp
+    call    _fatal_pairs_
+    # unmapping memory used for reading the file.
+    movq    $5, %r15
+    jmp     .unmmap_and_finish
+.get_ready_for_interp:
+    movq    -48(%rbp), %rdi
+    call    _int_
+    movq    $0, %r15
+.unmmap_and_finish:
     # unmapping memory used for reading the file.
     movq    -8(%rbp), %rdi
     movq    -16(%rbp), %rsi
     movq    $11, %rax
     syscall
-    movq    -56(%rbp), %rdi
-    testq   %rdi, %rdi
-    jz      .get_ready_for_interp
-    call    _fatal_pairs_
-
-.get_ready_for_interp:
-    __fini  $69
+    __fini  %r15
 
 #  _______________________________________
 # / checks if whatever stored into edi is \
