@@ -1,3 +1,6 @@
+.section .rodata
+    .ss: .string "%d\n"
+
 .section    .text
 .globl  _start
 
@@ -70,7 +73,7 @@ _start:
     # r15 will be a pointer to the current location
     # in the file.
     movq    -8(%rbp), %r15
-    movq    -40(%rbp), %r8
+    leaq    Loops(%rip), %r8
 
 .lexer_eats:
     # Making sure ain't the EOF
@@ -117,7 +120,7 @@ _start:
     # Making sure there still is enough capacity
     # to keep collecting `[` tokens...
     movq    -56(%rbp), %rbx
-    cmpq    %rbx, loops_max(%rip)
+    cmpq    loops_max(%rip), %rbx 
     je      fatal_pair
     # Setting the mark for this token.
     # The mark is its position among all
@@ -127,7 +130,7 @@ _start:
     # `Loops` is a stack of '[' token addresses.
     # Storing this `[` token.
     leaq    Loops(%rip), %rax
-    movq    %r8, (%rax, %rbx, 8)
+    movq    %r8, 0(%rax, %rbx, 8)
     incq    -56(%rbp)
     jmp     .lx_advance_one_token
 .lx_handle_closing:
@@ -154,7 +157,9 @@ _start:
     movq    -48(%rbp), %rax
     movq    token_size(%rip), %rbx
     mulq    %rbx
-    addq    %rax, -40(%rbp)
+    leaq    Tokens(%rip), %rbx
+    leaq    (%rbx, %rax), %rax
+    movq    %rax, -40(%rbp)
     jmp     .lx_continue
 .lx_skip_ch:
     # If the char is a newline the lexer parameters
@@ -175,7 +180,7 @@ _start:
     movq    -56(%rbp), %rax
     testq   %rax, %rax
     jz      .get_ready_for_interp
-    movq    -56(%rbp), %rdi
+    movq    -48(%rbp), %rdi
     call    _fatal_pairs_
 
 .get_ready_for_interp:

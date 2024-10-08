@@ -8,8 +8,15 @@
     .globl  loops_max
 
 .section    .bss 
-    Tokens: .zero   1024 * 32                  # Capcity of 1024 tokens of size 32 B.......
-    Loops:  .zero   64   * 8                   # Array of ptrs <ptr is size 8 B>...........
+	.align 32
+	.type	Tokens, @object
+	.size	Tokens, 1024 * 32
+    Tokens: .zero   1024 * 32   # Capcity of 1024 tokens of size 32 B.......
+
+	.align 32
+	.type	Loops, @object
+	.size	Loops, 64 * 8
+    Loops:  .zero   64 * 8     # Array of ptrs <ptr is size 8 B>...........
 
     .globl  Tokens
     .globl  Loops

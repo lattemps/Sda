@@ -1,11 +1,10 @@
-objs = inst.o fatal.o interpreter.o printf.o
-exec = inst
-
+objs = sda.o err.o int.o printf.o
+exec = Sda
 
 inst: $(objs)
 	ld	-o $(exec) $(objs)
 %.o: %.s
-	as	$< -o $@
+	as	$< -o $@ -g
 
 test_printf:
 	as printf.s -o printf.o

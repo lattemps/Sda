@@ -35,6 +35,7 @@ _printf_:
     # -24(%rbp): nth argument....................
     movq    %rdi, -8(%rbp)
     movq    $0, -16(%rbp)
+    movq    $0, -24(%rbp)
     # r8: reads the fmt string...
     # r9: modifies the buffer....
     movq    %rsi, %r8
@@ -105,7 +106,7 @@ _printf_:
     jz      ._pf_fmt_num_write
     # Checking there is not number overflow.
     cmpq    %r11, .numbuf(%rip)
-    je      .fatal_buff_overflow                                                                                # ToDo: Test
+    je      .fatal_buff_overflow
     # Checking there is not message overflow.
     movq    -16(%rbp), %rax
     cmpq    %rax, .buffsz(%rip)
@@ -234,24 +235,32 @@ _printf_:
 #    movq    $1, %rdi
 #    leaq    .fmt(%rip), %rsi
 #    call    _printf_
+#    #popq    %rax
+#   #@popq    %rax
 #
 #    pushq   $2
 #    pushq   $1
 #    movq    $1, %rdi
 #    leaq    .fmt(%rip), %rsi
 #    call    _printf_
+#    popq    %rax
+#    popq    %rax
 #
 #    pushq   $2
 #    pushq   $1
 #    movq    $1, %rdi
 #    leaq    .fmt(%rip), %rsi
 #    call    _printf_
+#    popq    %rax
+#    popq    %rax
 #
 #    pushq   $2
 #    pushq   $1
 #    movq    $1, %rdi
 #    leaq    .fmt(%rip), %rsi
 #    call    _printf_
+#    popq    %rax
+#    popq    %rax
 #
 #    __fini  $0
 #    leave

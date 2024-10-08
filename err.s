@@ -53,22 +53,21 @@ _fatal_pairs_:
     subq    $32, %rsp
     movq    $0, -8(%rbp)
     movq    %rdi, -16(%rbp)
-    leaq    Loops(%rip), %r15
-    movq    (%r15), %r14
+    movq    Loops(%rip), %r15
 ._ftp_loop:
     movq    -8(%rbp), %rax
-    cmpq    %rax, -16(%rbp)
+    cmpq    -16(%rbp), %rax
     je      ._ftp_fini
-    pushq   16(%r14)
-    pushq   8(%r14)
+    pushq   16(%r15)
+    pushq   8(%r15)
     movq    $2, %rdi
     leaq    .pairs_msg(%rip), %rsi
     call    _printf_
-    popq    %rax
-    popq    %rax
+    addq    $16, %rsp
     incq    -8(%rbp)
-    addq    $8, %r15
-    movq    (%r15), %r14
+    addq    $32, %r15
     jmp     ._ftp_loop
 ._ftp_fini:
     __fini  $5
+    leave
+    ret
