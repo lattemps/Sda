@@ -1,3 +1,10 @@
+#        _.---._    /\\
+#     ./'       "--`\//			instantane - makefile
+#   ./              o \			Oct 9 2024
+#  /./\  )______   \__ \
+# ./  / /\ \   | \ \  \ \
+#    / /  \ \  | |\ \  \7
+#     "     "    "  "
 objs = inst.o err.o int.o printf.o
 exec = inst
 

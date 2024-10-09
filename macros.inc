@@ -1,3 +1,10 @@
+#        _.---._    /\\
+#     ./'       "--`\//			instantane - helpers
+#   ./              o \			Oct 9 2024
+#  /./\  )______   \__ \
+# ./  / /\ \   | \ \  \ \
+#    / /  \ \  | |\ \  \7
+#     "     "    "  "
 .macro  __eputs msg, len
     leaq    \msg, %rsi
     movq    \len, %rdx

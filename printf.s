@@ -1,3 +1,10 @@
+#        _.---._    /\\
+#     ./'       "--`\//			instantane - tiny printf implementation
+#   ./              o \			Oct 9 2024
+#  /./\  )______   \__ \
+# ./  / /\ \   | \ \  \ \
+#    / /  \ \  | |\ \  \7
+#     "     "    "  "
 .section    .rodata
     .nullstr_msg:   .string "[printf:fatal]: null string (rsi)\n"
     .nullstr_len:   .quad   34

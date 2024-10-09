@@ -1,3 +1,10 @@
+#        _.---._    /\\
+#     ./'       "--`\//			instantane - main file & lexer
+#   ./              o \			Oct 9 2024
+#  /./\  )______   \__ \
+# ./  / /\ \   | \ \  \ \
+#    / /  \ \  | |\ \  \7
+#     "     "    "  "
 .section    .text
 .globl  _start
 
